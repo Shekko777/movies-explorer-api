@@ -1,0 +1,25 @@
+{
+  "name": "movies-explorer-api",
+  "version": "1.0.0",
+  "description": "Дипломная работа Ивана Першина (github.com/Shekko777)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app",
+    "dev": "nodemon app",
+    "lint": "npx eslint ."
+  },
+  "keywords": [],
+  "author": "Иван Першин",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "nodemon": "^3.0.2"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.4",
+    "validator": "^13.11.0"
+  }
+}
