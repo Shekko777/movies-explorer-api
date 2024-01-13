@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const appRouter = require('./routes/index');
 const auth = require('./middlewares/auth');
 const { createUser, loginUser, signOut } = require('./controllers/users');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 // Переменные окружения
 const { PORT } = process.env;
@@ -24,20 +25,15 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '659ed8417679f8896e6202f6',
-  };
+app.use(requestLogger); // Сбор логов запроса
 
-  next();
-});
-
-// Регистрация
 app.post('/signup', createUser);
 app.post('/signin', loginUser);
 app.use(auth);
 app.use(appRouter);
-app.get('/signout', signOut);
+app.post('/signout', signOut);
+
+app.use(errorLogger); // Сбор логов ошибок
 
 // Перехватывает ошибки из controllers
 app.use((err, req, res, next) => {
