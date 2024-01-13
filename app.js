@@ -1,20 +1,43 @@
 require('dotenv').config();
+// Подключение модулей
 const express = require('express');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const appRouter = require('./routes/index');
+const auth = require('./middlewares/auth');
+const { createUser, loginUser, signOut } = require('./controllers/users');
 
+// Переменные окружения
 const { PORT } = process.env;
 
 // Подключение к БД
-mongoose.connect('mongodb://127.0.0.1:27017/mestodb')
+mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb')
   .then(() => {
-    console.log('mongod connected');
+    console.log('mongo connected');
   })
   .catch((err) => {
     console.log(err);
   });
 
+// Создание приложения
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
+
+app.use((req, res, next) => {
+  req.user = {
+    _id: '659ed8417679f8896e6202f6',
+  };
+
+  next();
+});
+
+// Регистрация
+app.post('/signup', createUser);
+app.post('/signin', loginUser);
+app.use(auth);
+app.use(appRouter);
+app.get('/signout', signOut);
 
 // Перехватывает ошибки из controllers
 app.use((err, req, res, next) => {
