@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require('bcrypt'); // Для хеширования пароля при регистрации
 const jwt = require('jsonwebtoken'); // Для проверки токена при авторизации
-const UserModel = require('../models/user');
+const UserModel = require('../models/users'); // Модель пользователя
 
 const { JWT_SECRET, NODE_ENV } = process.env;
 
@@ -9,10 +9,11 @@ const { JWT_SECRET, NODE_ENV } = process.env;
 const NotValidId = require('../errors/NotValidId'); // 404 statusCode
 const ValidationError = require('../errors/ValidationError'); // 400 statusCode
 const BusyEmail = require('../errors/BusyEmail'); // 409 statusCode
-const InvalidLogin = require('../errors/InvalidLogin');
+const InvalidLogin = require('../errors/InvalidLogin'); // 401 statusCode
 
 // РЕГИСТРАЦИЯ : создаёт пользователя с переданными в теле данными
 // Принимает: email, password, name
+// Возвращает: email, name
 module.exports.createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then((hash) => UserModel.create({
@@ -34,31 +35,27 @@ module.exports.createUser = (req, res, next) => {
 };
 
 // ЛОГИН : проверяет переданные в теле почту и пароль
+// Принимает: email, password
+// Возвращает: устанавливает jwt в res.cookie
 module.exports.loginUser = (req, res, next) => UserModel.findOne({ email: req.body.email }).select('+password')
-  // .orFail(new Error('InvalidLogin'))
-  .then((user) => {
-    if (!user) {
-      throw new Error('InvalidLogin');
-    }
-    return bcrypt.compare(req.body.password, user.password)
-      .then((matched) => {
-        if (!matched) {
-          next(new Error('InvalidLogin'));
-        }
-        return user;
-      });
-  })
+  .orFail(new Error('InvalidLogin'))
+  .then((user) => bcrypt.compare(req.body.password, user.password)
+    .then((matched) => {
+      if (!matched) {
+        throw new Error('InvalidLogin');
+      }
+      return user;
+    }))
   .then((user) => {
     const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev_secret_key', { expiresIn: '7d' });
     res.cookie('jwt', token, {
       maxAge: 3600000,
       httpOnly: true,
     });
-    req.headers.authorization = token;
     res.status(200).send({ jwt: token });
   })
   .catch((err) => {
-    if (err.message === 'InvalidLogim') {
+    if (err.message === 'InvalidLogin') {
       next(new InvalidLogin('Неверный логин или пароль'));
     } else {
       next(err);
@@ -72,7 +69,7 @@ module.exports.signOut = (req, res, next) => {
   next();
 };
 
-// возвращает информацию о пользователе (email и имя)
+// Возвращает информацию о пользователе по id: email, name
 module.exports.getUserInfo = (req, res, next) => UserModel.findOne({ _id: req.user._id })
   .orFail(new Error('NotValidId'))
   .then((user) => {
@@ -86,7 +83,9 @@ module.exports.getUserInfo = (req, res, next) => UserModel.findOne({ _id: req.us
     }
   });
 
-// обновляет информацию о пользователе (email и имя)
+// Обновляет информацию о пользователе по id: email, name
+// Принимает: email, name
+// Возвращает: _id, email, name
 module.exports.changeUserInfo = (req, res, next) => UserModel.findByIdAndUpdate(
   req.user._id,
   { email: req.body.email, name: req.body.name },

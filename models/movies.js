@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+const validator = require('validator'); // Модуль для валидации
 
 const movieModel = new mongoose.Schema({
   country: {
@@ -74,6 +74,6 @@ const movieModel = new mongoose.Schema({
     type: String,
     required: true,
   },
-});
+}, { versionKey: false });
 
 module.exports = mongoose.model('movie', movieModel);
