@@ -12,5 +12,5 @@
 
 IP <51.250.111.221>
 
-API backend <a href="">https://api.movies-explorer.shekko.nomoredomainsmonster.ru</a>
+API backend <a href="https://api.movies-explorer.sheko.nomoredomainsmonster.ru">https://api.movies-explorer.sheko.nomoredomainsmonster.ru</a>
 
