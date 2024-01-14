@@ -3,16 +3,19 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 const { errors } = require('celebrate');
+const limiter = require('./utils/rateLimiter');
 const appRouter = require('./routes/index');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const allowedCors = require('./utils/allowedCors');
 
 // Переменные окружения
-const { PORT } = process.env;
+// Если нет .env файла, они установятся по дефолту
+const { NODE_ENV, PORT, DB_ADDRESS } = process.env;
 
 // Подключение к БД
-mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb')
+mongoose.connect(NODE_ENV === 'production' ? DB_ADDRESS : 'mongodb://127.0.0.1:27017/bitfilmsdb')
   .then(() => {
     console.log('mongo connected');
   })
@@ -22,6 +25,8 @@ mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb')
 
 // Создание приложения
 const app = express();
+app.use(helmet());
+app.use(limiter);
 
 app.use((req, res, next) => {
   const { origin } = req.headers;
@@ -57,5 +62,5 @@ app.use((err, req, res, next) => {
 
 // Включение сервера
 app.listen(PORT, () => {
-  console.log(`server started in ${PORT} port`);
+  console.log(`server started in ${NODE_ENV === 'production' ? PORT : 3000} port`);
 });

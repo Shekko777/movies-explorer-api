@@ -10,7 +10,7 @@ const Forbidden = require('../errors/Forbidden'); // 403 statusCode
 module.exports.returnSavedMovies = (req, res, next) => MovieModel.find()
   .populate('owner')
   .then((movies) => {
-    res.status(200).send({ movies });
+    res.status(200).send(movies);
   })
   .catch(next);
 

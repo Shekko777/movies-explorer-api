@@ -73,7 +73,7 @@ module.exports.signOut = (req, res, next) => {
 module.exports.getUserInfo = (req, res, next) => UserModel.findOne({ _id: req.user._id })
   .orFail(new Error('NotValidId'))
   .then((user) => {
-    res.status(200).send({ user });
+    res.status(200).send({ email: user.email, name: user.name });
   })
   .catch((err) => {
     if (err.message === 'NotValidId') {
@@ -85,7 +85,7 @@ module.exports.getUserInfo = (req, res, next) => UserModel.findOne({ _id: req.us
 
 // Обновляет информацию о пользователе по id: email, name
 // Принимает: email, name
-// Возвращает: _id, email, name
+// Возвращает: email, name
 module.exports.changeUserInfo = (req, res, next) => UserModel.findByIdAndUpdate(
   req.user._id,
   { email: req.body.email, name: req.body.name },
@@ -93,7 +93,7 @@ module.exports.changeUserInfo = (req, res, next) => UserModel.findByIdAndUpdate(
 )
   .orFail(new Error('NotValidId'))
   .then((user) => {
-    res.status(200).send({ user });
+    res.status(200).send({ email: user.email, name: user.name });
   })
   .catch((err) => {
     if (err.message === 'NotValidId') {
