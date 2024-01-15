@@ -3,13 +3,19 @@ const bcrypt = require('bcrypt'); // Для хеширования пароля 
 const jwt = require('jsonwebtoken'); // Для проверки токена при авторизации
 const UserModel = require('../models/users'); // Модель пользователя
 
-const { JWT_SECRET, NODE_ENV } = process.env;
+const { NODE_ENV = 'dev', JWT_SECRET = 'dev_secret_key' } = process.env;
 
 // Импорт ошибок
 const NotValidId = require('../errors/NotValidId'); // 404 statusCode
 const ValidationError = require('../errors/ValidationError'); // 400 statusCode
 const BusyEmail = require('../errors/BusyEmail'); // 409 statusCode
 const InvalidLogin = require('../errors/InvalidLogin'); // 401 statusCode
+const {
+  errorMessageBusyEmail,
+  errorMessageInvalidLogin,
+  errorMessageNotValid,
+  errorMessageValidationError,
+} = require('../utils/errorMessages'); // Сообщения ошибок
 
 // РЕГИСТРАЦИЯ : создаёт пользователя с переданными в теле данными
 // Принимает: email, password, name
@@ -26,9 +32,9 @@ module.exports.createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError('Переданы некорректные данные'));
+        next(new ValidationError(errorMessageValidationError));
       } else if (err.code === 11000) {
-        next(new BusyEmail('Пользователь с таким Email уже существует'));
+        next(new BusyEmail(errorMessageBusyEmail));
       }
       next(err);
     });
@@ -56,7 +62,7 @@ module.exports.loginUser = (req, res, next) => UserModel.findOne({ email: req.bo
   })
   .catch((err) => {
     if (err.message === 'InvalidLogin') {
-      next(new InvalidLogin('Неверный логин или пароль'));
+      next(new InvalidLogin(errorMessageInvalidLogin));
     } else {
       next(err);
     }
@@ -77,7 +83,7 @@ module.exports.getUserInfo = (req, res, next) => UserModel.findOne({ _id: req.us
   })
   .catch((err) => {
     if (err.message === 'NotValidId') {
-      next(new NotValidId('Пользователь по такому id не найден'));
+      next(new NotValidId(errorMessageNotValid));
     } else {
       next(err);
     }
@@ -97,7 +103,9 @@ module.exports.changeUserInfo = (req, res, next) => UserModel.findByIdAndUpdate(
   })
   .catch((err) => {
     if (err.message === 'NotValidId') {
-      next(new NotValidId('Пользователь по такому id не найден'));
+      next(new NotValidId(errorMessageNotValid));
+    } else if (err.code === 11000) {
+      next(new BusyEmail(errorMessageBusyEmail));
     } else {
       next(err);
     }

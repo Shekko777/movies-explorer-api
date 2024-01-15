@@ -1,28 +1,20 @@
 const router = require('express').Router();
-const { celebrate, Joi } = require('celebrate'); // Для валидации запросов
+const { errors } = require('celebrate'); // Перехват ошибок celebrate
 const usersRouter = require('./users'); // Users роуты
 const moviesRouter = require('./movies'); // Movies роуты
 const auth = require('../middlewares/auth'); // Проверка на авторизованность
-const { mailRegex } = require('../utils/regex'); // Регулярное выражение для проверки email
+const centralizedErrorHandler = require('../middlewares/centralizedErrorHandler'); // Мидлвар ошибок
+const { requestLogger, errorLogger } = require('../middlewares/logger'); // Сбор логов, модуль winston
+const { validationRegistration, validationAuthorization } = require('../utils/routeValidation'); // Валидация роутов
 
 // Контроллеры роутов
 const { createUser, loginUser, signOut } = require('../controllers/users'); // зарегистрироваться, залогиниться, выйти
 
-router.post('/signup', celebrate({ // Роутер регистрации
-  body: Joi.object().keys({
-    name: Joi.string().required().min(2).max(30),
-    email: Joi.string().required().pattern(mailRegex),
-    password: Joi.string().required(),
-  }),
-}), createUser);
+router.use(requestLogger); // Сбор логов запроса. До роутов
 
-router.post('/signin', celebrate({ // Роутер логирования
-  body: Joi.object().keys({
-    email: Joi.string().required().pattern(mailRegex),
-    password: Joi.string().required(),
-  }),
-}), loginUser);
-
+// РОУТЫ
+router.post('/signup', validationRegistration(), createUser); // Роут регистрации
+router.post('/signin', validationAuthorization(), loginUser); // Роут авторизации
 router.use(auth); // Проверка авторизованности пользователя
 router.use(usersRouter); // Пользовательские роуты
 router.use(moviesRouter); // Роуты для фильмов
@@ -31,5 +23,11 @@ router.post('/signout', signOut); // (выход) роут для удалени
 router.all('/*', (req, res) => { // Роут для несуществующих запросов
   res.status(404).send({ message: 'Страница не найдена' });
 });
+
+router.use(errorLogger); // Сбор логов ошибок. После роутов
+
+// ОШИБКИ
+router.use(errors()); // Перехват ошибок из celebrate
+router.use(centralizedErrorHandler); // Централизованный обработчик ошибок
 
 module.exports = router;

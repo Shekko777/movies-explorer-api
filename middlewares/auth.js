@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 // Ошибки
 const InvalidLogin = require('../errors/InvalidLogin');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
+const { NODE_ENV = 'dev', JWT_SECRET = 'dev_secret_key' } = process.env;
 
 module.exports = (req, res, next) => {
   const token = req.cookies.jwt;

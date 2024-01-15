@@ -5,9 +5,10 @@ const MovieModel = require('../models/movies'); // Модель фильмов
 const ValidationError = require('../errors/ValidationError'); // 400 statusCode
 const NotValidId = require('../errors/NotValidId'); // 404 statusCode
 const Forbidden = require('../errors/Forbidden'); // 403 statusCode
+const { errorMessageNotValid, errorMessageValidationError, errorMessageForbidden } = require('../utils/errorMessages');
 
-// Возвращает все сохранённые текущим пользователем фильмы
-module.exports.returnSavedMovies = (req, res, next) => MovieModel.find()
+// Возвращает все сохранённые фильмы текущим пользователем
+module.exports.returnSavedMovies = (req, res, next) => MovieModel.find({ owner: req.user._id })
   .populate('owner')
   .then((movies) => {
     res.status(200).send(movies);
@@ -34,7 +35,7 @@ module.exports.createMovie = (req, res, next) => MovieModel.create({
   })
   .catch((err) => {
     if (err.name === 'ValidationError') {
-      next(new ValidationError('Переданы неккоректные данные'));
+      next(new ValidationError(errorMessageValidationError));
     } else {
       next(err);
     }
@@ -53,20 +54,20 @@ module.exports.deleteMovieById = (req, res, next) => MovieModel.findById(req.par
         })
         .catch((err) => {
           if (err.message === 'NotValidId') {
-            next(new NotValidId('Фильм с указанными id не найдена'));
+            next(new NotValidId(errorMessageNotValid));
           } else if (err.name === 'CastError') {
-            next(new ValidationError('Невалидный id фильма'));
+            next(new ValidationError(errorMessageValidationError));
           } else {
             next(err);
           }
         });
     } else {
-      next(new Forbidden('Отказано в доступе'));
+      next(new Forbidden(errorMessageForbidden));
     }
   })
   .catch((err) => {
     if (err.message === 'NotValidId') {
-      next(NotValidId('Фильм с указанными id не найдена'));
+      next(NotValidId(errorMessageNotValid));
     } else {
       next(err);
     }
