@@ -7,11 +7,13 @@ const InvalidLogin = require('../errors/InvalidLogin');
 const { NODE_ENV = 'dev', JWT_SECRET = 'dev_secret_key' } = process.env;
 
 module.exports = (req, res, next) => {
-  const token = req.cookies.jwt;
+  const { authorization } = req.headers;
 
-  if (!token) {
+  if (!authorization) {
     next(new InvalidLogin('Необходима авторизация'));
   }
+
+  const token = authorization.replace('Bearer ', '');
 
   let payload;
 

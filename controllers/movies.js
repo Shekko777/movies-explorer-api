@@ -50,7 +50,7 @@ module.exports.deleteMovieById = (req, res, next) => MovieModel.findById(req.par
         .populate('owner')
         .orFail(new Error('NotValidId'))
         .then((deletedMovie) => {
-          res.status(200).send({ deletedMovie });
+          res.status(200).send(deletedMovie);
         })
         .catch((err) => {
           if (err.message === 'NotValidId') {

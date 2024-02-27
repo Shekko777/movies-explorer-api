@@ -54,10 +54,6 @@ module.exports.loginUser = (req, res, next) => UserModel.findOne({ email: req.bo
     }))
   .then((user) => {
     const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev_secret_key', { expiresIn: '7d' });
-    res.cookie('jwt', token, {
-      maxAge: 3600000,
-      httpOnly: true,
-    });
     res.status(200).send({ jwt: token });
   })
   .catch((err) => {
